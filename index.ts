@@ -1,12 +1,12 @@
-import express from 'express'
-const app = express()
-const port = 3000
+import express from "express";
+import { boardRouter } from "./src/routes/board.route";
 
-app.get('/', (req, res) => {
-  res.send('eHello World!')
-})
+const app = express();
+const port = 3000;
+
+app.use(express.json());
+app.use("/api/board", boardRouter);
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
-
+	console.log(`Listening on port ${port}`);
+});
