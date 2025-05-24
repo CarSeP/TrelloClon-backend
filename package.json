@@ -12,10 +12,12 @@
 	"license": "ISC",
 	"type": "commonjs",
 	"devDependencies": {
+		"@types/cors": "^2.8.18",
 		"express": "^5.1.0",
 		"tsx": "^4.19.4"
 	},
 	"dependencies": {
-		"@types/express": "^5.0.2"
+		"@types/express": "^5.0.2",
+		"cors": "^2.8.5"
 	}
 }
