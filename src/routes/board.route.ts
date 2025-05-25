@@ -1,30 +1,46 @@
-import { Router } from "express";
-import { BoardType } from "../interfaces/board.model";
+import { Response, Request, Router } from "express";
 import { generateID } from "../services/id.services";
+import {
+	addBoard,
+	deleteBoard,
+	getBoard,
+	getBoards,
+	updateBoard,
+} from "../services/board.services";
 
 export const boardRouter = Router();
 
-let boards: BoardType[] = [];
-
-boardRouter.get("/", (req, res): any => {
-	return res.json(boards);
-});
-
-boardRouter.get("/:id", (req, res): any => {
-	const { id } = req.params;
-
-	const board = boards.find((el) => el.id === id);
-
-	if (!board) {
-		return res.status(404).json({
-			message: `Board with id '${id}' does not exist`,
+boardRouter.get("/", async (req: Request, res: Response): Promise<any> => {
+	try {
+		const boards = await getBoards();
+		return res.json(boards);
+	} catch (e) {
+		return res.status(500).json({
+			message: e,
 		});
 	}
-
-	return res.json(board);
 });
 
-boardRouter.post("/", (req, res): any => {
+boardRouter.get("/:id", async (req: Request, res: Response): Promise<any> => {
+	const { id } = req.params;
+
+	try {
+		const board = await getBoard(id);
+		if (!board) {
+			return res.status(404).json({
+				message: `Board with id '${id}' does not exist`,
+			});
+		}
+
+		return res.json(board);
+	} catch (e) {
+		return res.status(500).json({
+			message: e,
+		});
+	}
+});
+
+boardRouter.post("/", async (req: Request, res: Response): Promise<any> => {
 	const { body } = req;
 
 	if (!body) {
@@ -41,34 +57,40 @@ boardRouter.post("/", (req, res): any => {
 		});
 	}
 
-	const newBoard = {
-		id: generateID(7),
-		columns: [],
-		title,
-	};
-
-	boards.push(newBoard);
-
-	return res.json(newBoard);
-});
-
-boardRouter.delete("/:id", (req, res): any => {
-	const { id } = req.params;
-
-	const deletedBoard = boards.find((el) => el.id === id);
-
-	if (!deletedBoard) {
-		return res.status(404).json({
-			message: `Board with id '${id}' does not exist`,
+	try {
+		await addBoard({
+			id: generateID(7),
+			title,
+		});
+		return res.sendStatus(204);
+	} catch (e) {
+		return res.status(500).json({
+			message: e,
 		});
 	}
-
-	boards = boards.filter((el) => el.id !== id);
-
-	return res.json(deletedBoard);
 });
 
-boardRouter.patch("/:id", (req, res): any => {
+boardRouter.delete("/:id", async (req: Request, res: Response): Promise<any> => {
+		const { id } = req.params;
+
+		try {
+			const board = await deleteBoard(id);
+			if (!board) {
+				return res.status(404).json({
+					message: `Board with id '${id}' does not exist`,
+				});
+			}
+
+			return res.sendStatus(204);
+		} catch (e) {
+			return res.status(500).json({
+				message: e,
+			});
+		}
+	}
+);
+
+boardRouter.patch("/:id", async (req: Request, res: Response): Promise<any> => {
 	const { id } = req.params;
 	const { body } = req;
 
@@ -78,22 +100,14 @@ boardRouter.patch("/:id", (req, res): any => {
 		});
 	}
 
-	let updatedBoard = boards.find((el) => el.id === id);
-
-	if (!updatedBoard) {
-		return res.status(404).json({
-			message: `Board with id '${id}' does not exist`,
-		});
-	}
-
-	updatedBoard.title = body.title || updatedBoard.title;
-
-	boards = boards.map((el) => {
-		if (el.id === id) {
-			el = updatedBoard;
+	try {
+		const board = await updateBoard({ ...body, id });
+		if (!board) {
+			return res.status(404).json({
+				message: `Board with id '${id}' does not exist`,
+			});
 		}
-		return el;
-	});
 
-	return res.json(updatedBoard);
+		return res.sendStatus(204);
+	} catch {}
 });
