@@ -1,3 +1,4 @@
+import { routerType } from "./../interfaces/router.model";
 import { Response, Request, Router } from "express";
 import { generateID } from "../services/id.services";
 import {
@@ -10,18 +11,18 @@ import {
 
 export const boardRouter = Router();
 
-boardRouter.get("/", async (req: Request, res: Response): Promise<any> => {
+boardRouter.get("/", async (req: Request, res: Response): routerType => {
 	try {
 		const boards = await getBoards();
 		return res.json(boards);
 	} catch (e) {
 		return res.status(500).json({
-			message: e,
+			message: e.message,
 		});
 	}
 });
 
-boardRouter.get("/:id", async (req: Request, res: Response): Promise<any> => {
+boardRouter.get("/:id", async (req: Request, res: Response): routerType => {
 	const { id } = req.params;
 
 	try {
@@ -35,12 +36,12 @@ boardRouter.get("/:id", async (req: Request, res: Response): Promise<any> => {
 		return res.json(board);
 	} catch (e) {
 		return res.status(500).json({
-			message: e,
+			message: e.message,
 		});
 	}
 });
 
-boardRouter.post("/", async (req: Request, res: Response): Promise<any> => {
+boardRouter.post("/", async (req: Request, res: Response): routerType => {
 	const { body } = req;
 
 	if (!body) {
@@ -49,7 +50,7 @@ boardRouter.post("/", async (req: Request, res: Response): Promise<any> => {
 		});
 	}
 
-	const { title } = body;
+	const { title, userID } = body;
 
 	if (!title) {
 		return res.status(400).json({
@@ -57,40 +58,42 @@ boardRouter.post("/", async (req: Request, res: Response): Promise<any> => {
 		});
 	}
 
-	try {
-		await addBoard({
-			id: generateID(7),
-			title,
+	if (!userID) {
+		return res.status(400).json({
+			error: "UserID not provided",
 		});
+	}
+
+	try {
+		await addBoard({ id: generateID(7), title, usersID: [userID] });
 		return res.sendStatus(204);
 	} catch (e) {
 		return res.status(500).json({
-			message: e,
+			message: e.message,
 		});
 	}
 });
 
-boardRouter.delete("/:id", async (req: Request, res: Response): Promise<any> => {
-		const { id } = req.params;
+boardRouter.delete("/:id", async (req: Request, res: Response): routerType => {
+	const { id } = req.params;
 
-		try {
-			const board = await deleteBoard(id);
-			if (!board) {
-				return res.status(404).json({
-					message: `Board with id '${id}' does not exist`,
-				});
-			}
-
-			return res.sendStatus(204);
-		} catch (e) {
-			return res.status(500).json({
-				message: e,
+	try {
+		const board = await deleteBoard(id);
+		if (!board) {
+			return res.status(404).json({
+				message: `Board with id '${id}' does not exist`,
 			});
 		}
-	}
-);
 
-boardRouter.patch("/:id", async (req: Request, res: Response): Promise<any> => {
+		return res.sendStatus(204);
+	} catch (e) {
+		return res.status(500).json({
+			message: e.message,
+		});
+	}
+});
+
+boardRouter.patch("/:id", async (req: Request, res: Response): routerType => {
 	const { id } = req.params;
 	const { body } = req;
 
@@ -99,6 +102,10 @@ boardRouter.patch("/:id", async (req: Request, res: Response): Promise<any> => {
 			error: "Body not provided",
 		});
 	}
+
+	delete body.columns;
+	delete body.createdAt;
+	delete body.updatedAt;
 
 	try {
 		const board = await updateBoard({ ...body, id });
@@ -109,5 +116,9 @@ boardRouter.patch("/:id", async (req: Request, res: Response): Promise<any> => {
 		}
 
 		return res.sendStatus(204);
-	} catch {}
+	} catch (e) {
+		return res.status(500).json({
+			message: e.message,
+		});
+	}
 });

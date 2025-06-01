@@ -1,27 +1,15 @@
-import mongoose from "mongoose";
+import { Board } from "../schemas/board.schema";
 import { BoardType } from "../interfaces/board.model";
-
-const boardSchema = new mongoose.Schema({
-	id: {
-		type: String,
-		require: true,
-	},
-	title: {
-		type: String,
-		require: true,
-		maxlength: 30,
-	},
-});
-
-export const Board = mongoose.model("board", boardSchema);
 
 export const getBoards = async () => {
 	try {
 		return await Board.find(
 			{},
 			{
+				id: 1,
+				title: 1,
+				usersID: 1,
 				_id: 0,
-				__v: 0,
 			}
 		);
 	} catch {
@@ -47,7 +35,6 @@ export const getBoard = async (id: string) => {
 
 export const addBoard = async (board: BoardType) => {
 	const newBoard = new Board(board);
-
 	try {
 		await newBoard.save();
 		return board;
