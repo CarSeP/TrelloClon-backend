@@ -10,7 +10,7 @@ export interface BoardType {
 export interface ColumnType {
 	id: string;
 	title: string;
-	cards: CardType[];
+	cards?: CardType[];
 }
 
 export interface CardType {
@@ -21,7 +21,7 @@ export interface CardType {
 		date: Date;
 		userID: string;
 	};
-	updatedAt: [
+	updatedAt?: [
 		{
 			userID: string;
 			date: Date;
