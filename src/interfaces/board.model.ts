@@ -8,13 +8,13 @@ export interface BoardType {
 }
 
 export interface ColumnType {
-	id: string;
+	id: number;
 	title: string;
 	cards?: CardType[];
 }
 
 export interface CardType {
-	id: string;
+	id: number;
 	title: string;
 	description: string;
 	createdAt: {
