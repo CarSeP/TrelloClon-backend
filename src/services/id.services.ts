@@ -12,3 +12,9 @@ export const generateID = (length: number) => {
 
 	return id;
 };
+
+export const getMaxID = (list: { id: number }[]): number => {
+	return list.reduce((accumulator: number, currentValue) => {
+		return currentValue.id > accumulator ? currentValue.id : accumulator;
+	}, 0);
+};
