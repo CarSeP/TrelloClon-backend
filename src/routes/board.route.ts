@@ -1,44 +1,32 @@
 import { routerType } from "./../interfaces/router.model";
 import { Response, Request, Router } from "express";
 import { generateID } from "../services/id.services";
-import {
-	addBoard,
-	deleteBoard,
-	getBoard,
-	getBoards,
-	updateBoard,
-} from "../services/board.services";
+import { prisma } from "../services/prisma.services";
 
 export const boardRouter = Router();
 
 boardRouter.get("/", async (req: Request, res: Response): routerType => {
-	try {
-		const boards = await getBoards();
-		return res.json(boards);
-	} catch (e) {
-		return res.status(500).json({
-			message: e.message,
-		});
-	}
+	const boards = await prisma.board.findMany()
+	return res.status(200).json(boards)
 });
 
 boardRouter.get("/:id", async (req: Request, res: Response): routerType => {
 	const { id } = req.params;
 
-	try {
-		const board = await getBoard(id);
-		if (!board) {
-			return res.status(404).json({
-				message: `Board with id '${id}' does not exist`,
-			});
+	const board = await prisma.board.findUnique({
+		where: {
+			id
 		}
+	})
 
-		return res.json(board);
-	} catch (e) {
-		return res.status(500).json({
-			message: e.message,
-		});
+	if (!board) {
+		return res.status(404).json({
+			message: "Board not found"
+		})
 	}
+
+	return res.status(200).json(board)
+
 });
 
 boardRouter.post("/", async (req: Request, res: Response): routerType => {
@@ -64,33 +52,41 @@ boardRouter.post("/", async (req: Request, res: Response): routerType => {
 		});
 	}
 
-	try {
-		await addBoard({ id: generateID(7), title, usersID: [userID] });
-		return res.sendStatus(204);
-	} catch (e) {
-		return res.status(500).json({
-			message: e.message,
-		});
-	}
+	const user = await prisma.board.create({
+		data: {
+			id: generateID(8),
+			title,
+			usersID: [userID]
+		}
+	})
+
+	res.status(201).json(user)
+
 });
 
 boardRouter.delete("/:id", async (req: Request, res: Response): routerType => {
 	const { id } = req.params;
 
-	try {
-		const board = await deleteBoard(id);
-		if (!board) {
-			return res.status(404).json({
-				message: `Board with id '${id}' does not exist`,
-			});
+	const existBoard = await prisma.board.findUnique({
+		where: {
+			id
 		}
+	})
 
-		return res.sendStatus(204);
-	} catch (e) {
-		return res.status(500).json({
-			message: e.message,
-		});
+	if (!existBoard) {
+		return res.status(404).json({
+			message: "Board not found"
+		})
 	}
+
+	const board = await prisma.board.delete({
+		where: {
+			id
+		}
+	})
+
+	res.status(200).json(board)
+
 });
 
 boardRouter.patch("/:id", async (req: Request, res: Response): routerType => {
@@ -103,22 +99,31 @@ boardRouter.patch("/:id", async (req: Request, res: Response): routerType => {
 		});
 	}
 
-	delete body.columns;
-	delete body.createdAt;
-	delete body.updatedAt;
-
-	try {
-		const board = await updateBoard({ ...body, id });
-		if (!board) {
-			return res.status(404).json({
-				message: `Board with id '${id}' does not exist`,
-			});
+	const existBoard = await prisma.board.findUnique({
+		where: {
+			id
 		}
+	})
 
-		return res.sendStatus(204);
-	} catch (e) {
-		return res.status(500).json({
-			message: e.message,
-		});
+	if (!existBoard) {
+		return res.status(404).json({
+			message: "Board not found"
+		})
 	}
+
+	const data: any = {};
+	const { title, usersID } = body;
+
+	if (title !== undefined) data.title = title;
+	if (usersID !== undefined) data.usersID = usersID;
+
+	const board = await prisma.board.update({
+		where: {
+			id
+		},
+		data: data
+	})
+
+
+	res.status(200).json(board)
 });
